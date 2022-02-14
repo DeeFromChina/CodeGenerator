@@ -1,0 +1,44 @@
+package ${voClass.classPath};
+
+import java.util.Date;
+import java.io.Serializable;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
+
+/**
+ * @auther ${author}
+ * @create ${createTime}
+ * @describe
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@ApiModel(value="${voClass.classImpl}对象")
+public class ${voClass.className} implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    #foreach($field in ${voClass.voClassFields})
+    @ApiModelProperty(value = "${field.comment}")
+    #if(${field.isRequired})
+    @NotBlank(message = "${field.comment}不为空")
+    #end
+    #if(${field.maxLength})
+    @Length(max = ${field.maxLength}, message = "${field.comment}长度不能超过${field.maxLength}位字符")
+    #end
+    private ${field.propertyType} ${field.propertyName};
+
+    #end
+
+    #foreach($field in ${voClass.voClassFields})
+    public ${field.propertyType} ${field.getters}() {
+        return this.${field.propertyName};
+    }
+
+    public void ${field.setters}(${field.propertyType} ${field.propertyName}) {
+        this.${field.propertyName} = ${field.propertyName};
+    }
+
+    #end
+}

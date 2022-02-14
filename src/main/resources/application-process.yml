@@ -1,0 +1,6 @@
+process:
+  rule:
+    "[currentUserId]": "currentUser.getUserId()"
+    "[currentUserCode]": "currentUser.getUserCode()"
+    "[currentUserName]": "currentUser.getUserName()"
+

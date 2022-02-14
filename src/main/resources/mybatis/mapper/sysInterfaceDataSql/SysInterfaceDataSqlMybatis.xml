@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generator.mapper.sysInterfaceDataSql.SysInterfaceDataSqlMapper">
+
+    <!--<resultMap id="BaseInsertMap" type="com.rule.engine.bean.sysInterfaceDataSql.SysInterfaceDataSql">
+        <id column="id" property="id" />
+    </resultMap>-->
+
+    <insert id="insertBySql" parameterType="com.generator.bean.sysInterfaceDataSql.SysInterfaceDataSql" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        ${sql}
+    </insert>
+
+    <update id="updateBySql" parameterType="com.generator.bean.sysInterfaceDataSql.SysInterfaceDataSql">
+        ${sql}
+    </update>
+
+    <delete id="deleteBySql" parameterType="com.generator.bean.sysInterfaceDataSql.SysInterfaceDataSql">
+        ${sql}
+    </delete>
+
+</mapper>

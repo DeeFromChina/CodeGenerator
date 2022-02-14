@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generator.mapper.sysInterfaceTableColumnInfo.SysInterfaceTableColumnInfoMapper">
+
+    <select id="queryCurrentInterfaceBatchList" parameterType="Map" resultType="Map">
+        select
+            distinct
+            sql_batch_id AS sqlBatchId,
+            sql_condition AS sqlCondition,
+            table_code AS tableCode,
+            sql_type AS sqlType
+        from sys_interface_table_column_info
+        where sys_interface_info_id = #{sysInterfaceInfoId}
+        order by sql_batch_id
+    </select>
+
+    <select id="querySysInterfaceTableColumnInfoList" parameterType="Map" resultType="com.generator.bean.sysInterfaceTableColumnInfo.SysInterfaceTableColumnInfo">
+        select
+            *
+        from sys_interface_table_column_info
+        <where>
+            <if test="sysInterfaceInfoId != null and sysInterfaceInfoId != ''">
+            and sys_interface_info_id = #{sysInterfaceInfoId}
+            </if>
+            <if test="sqlBatchId != null and sqlBatchId != ''">
+                and sql_batch_id = #{sqlBatchId}
+            </if>
+            <if test="tableCode != null and tableCode != ''">
+                and table_code = #{tableCode}
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteSysInterfaceTableColumnInfo" parameterType="Map">
+        delete from sys_interface_table_column_info
+        where sys_interface_info_id = #{sysInterfaceInfoId}
+    </delete>
+
+    <insert id="insertSysInterfaceTableColumnInfoList" parameterType="com.generator.bean.sysInterfaceTableColumnInfo.SysInterfaceTableColumnInfo">
+        insert into sys_interface_table_column_info
+        (
+            table_code,
+            sys_interface_info_id,
+            sql_batch_id,
+            condition_value,
+            table_column_code,
+            param_code,
+            father_node_code,
+            sql_type,
+            sql_condition,
+            create_time,
+            create_user,
+            last_update_time,
+            last_update_user
+        )
+        value
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+                #{item.tableCode},
+                #{item.sysInterfaceInfoId},
+                #{item.sqlBatchId},
+                #{item.conditionValue},
+                #{item.tableColumnCode},
+                #{item.paramCode},
+                #{item.fatherNodeCode},
+                #{item.sqlType},
+                #{item.sqlCondition},
+                #{item.createTime},
+                #{item.createUser},
+                #{item.lastUpdateTime},
+                #{item.lastUpdateUser}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

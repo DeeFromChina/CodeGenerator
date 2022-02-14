@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generator.mapper.DatabaseTableColumnMapper">
+
+    <!--mysql-->
+    <select id="queryDatabaseTableColumnListMap" parameterType="Map" resultType="Map">
+        SELECT
+            ORDINAL_POSITION AS seqNo,<!--'列的排列顺序',-->
+            COLUMN_NAME AS columnName,<!--'列名',-->
+            COLUMN_COMMENT AS columnDesc,<!--'注释'-->
+            CAST(DATA_TYPE AS CHAR(100) CHARACTER SET utf8) AS dataType,<!--'数据类型',-->
+            IFNULL(CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION) AS columnLength,<!--'字符最大长度','数值精度(最大位数)',-->
+            NUMERIC_SCALE AS decimalPoint,<!--'小数精度',-->
+            (
+                CASE
+                    WHEN EXTRA = 'auto_increment'
+                        THEN '√'
+                    ELSE ''
+                END
+            ) selfIncreasing,<!--AS '额外说明',-->
+            IS_NULLABLE AS isNull,<!--'是否为空',-->
+            COLUMN_DEFAULT AS defaultValue <!--'默认值'-->
+            <!--TABLE_SCHEMA AS '库名',
+            TABLE_NAME AS '表名',
+            COLUMN_TYPE AS 列类型,
+            COLUMN_KEY 'KEY',-->
+        FROM information_schema.`COLUMNS`
+        WHERE TABLE_SCHEMA = #{databaseName}
+            and table_name = #{tableName}
+</select>
+
+<!--sqlserver-->
+    <!--<select id="queryDatabaseTableColumnListMap" parameterType="Map" resultType="Map">
+        SELECT
+            col.colorder AS seqNo,&lt;!&ndash; 序号 &ndash;&gt;
+            col.name AS columnName,&lt;!&ndash; 字段名 &ndash;&gt;
+            ISNULL(ep.value, '') AS columnDesc,&lt;!&ndash; 字段说明 &ndash;&gt;
+            t.name AS dataType,&lt;!&ndash; 字段类型 &ndash;&gt;
+            col.length AS columnLength,&lt;!&ndash; 字段长度 &ndash;&gt;
+            ISNULL(COLUMNPROPERTY(col.id, col.name, 'Scale'), 0) AS decimalPoint,&lt;!&ndash; 小数点数 &ndash;&gt;
+            (
+                CASE
+                    WHEN COLUMNPROPERTY(col.id, col.name, 'IsIdentity') = 1
+                        THEN '√'
+                    ELSE ''
+                END
+            ) AS selfIncreasing,&lt;!&ndash; 是否自增 &ndash;&gt;
+            (
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1 FROM dbo.sysindexes si
+                        INNER JOIN dbo.sysindexkeys sik ON si.id = sik.id AND si.indid = sik.indid
+                        INNER JOIN dbo.syscolumns sc ON sc.id = sik.id AND sc.colid = sik.colid
+                        INNER JOIN dbo.sysobjects so ON so.name = si.name AND so.xtype = 'PK'
+                        LEFT JOIN sys.extended_properties F ON so.id = F.major_id AND F.minor_id = 0
+                        WHERE sc.id = col.id AND sc.colid = col.colid
+                    )
+                    THEN '√'
+                    ELSE ''
+                END
+            ) AS primaryKey,&lt;!&ndash; 是否主键 &ndash;&gt;
+            (
+                CASE
+                    WHEN col.isnullable = 1
+                        THEN '√'
+                    ELSE ''
+                END
+            ) AS isNull,&lt;!&ndash; 是否为空 &ndash;&gt;
+            ISNULL(comm.TEXT, '') AS defaultValue&lt;!&ndash; 默认值 &ndash;&gt;
+        FROM
+            dbo.syscolumns col
+        LEFT JOIN dbo.systypes t ON col.xtype = t.xusertype
+        INNER JOIN dbo.sysobjects obj ON col.id = obj.id AND obj.xtype = 'U' AND obj.status <![CDATA[>=]]> 0
+        LEFT JOIN dbo.syscomments comm ON col.cdefault = comm.id
+        LEFT JOIN sys.extended_properties ep ON col.id = ep.major_id AND col.colid = ep.minor_id
+            AND ep.name = 'MS_Description'
+        WHERE
+            obj.name = #{tableName} &lt;!&ndash; 表名 &ndash;&gt;
+    </select>-->
+
+
+</mapper>

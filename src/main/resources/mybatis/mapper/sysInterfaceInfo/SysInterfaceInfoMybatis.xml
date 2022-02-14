@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generator.mapper.sysInterfaceInfo.SysInterfaceInfoMapper">
+
+    <select id="querySysInterfaceInfo" parameterType="com.generator.bean.sysInterfaceInfo.SysInterfaceInfo" resultType="com.generator.bean.sysInterfaceInfo.SysInterfaceInfo">
+        select
+            *
+        from sys_interface_info
+        <where>
+            <if test="apiId != null and apiId != ''">
+                and api_id = #{apiId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertSysInterfaceInfo" parameterType="com.generator.bean.sysInterfaceInfo.SysInterfaceInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_interface_info
+        (
+            interface_name,
+            sys_name,
+            api_modular,
+            api_method,
+            api_type,
+            is_enable,
+            create_time,
+            create_user,
+            last_update_time,
+            last_update_user,
+            api_id
+        )
+        value
+        (
+            #{interfaceName},
+            #{sysName},
+            #{apiModular},
+            #{apiMethod},
+            #{apiType},
+            #{isEnable},
+            #{createTime},
+            #{createUser},
+            #{lastUpdateTime},
+            #{lastUpdateUser},
+            #{apiId}
+        )
+    </insert>
+
+    <update id="updateSysInterfaceInfo" parameterType="com.generator.bean.sysInterfaceInfo.SysInterfaceInfo">
+        update sys_interface_info
+            set interface_name = #{interfaceName},
+                sys_name = #{sysName},
+                api_modular = #{apiModular},
+                api_method = #{apiMethod},
+                api_type = #{apiType},
+                is_enable = #{isEnable},
+                last_update_time = #{lastUpdateTime},
+                last_update_user = #{lastUpdateUser},
+                api_id = #{apiId}
+        where id = #{id}
+    </update>
+
+</mapper>

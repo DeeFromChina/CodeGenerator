@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generator.mapper.DatabaseTableMapper">
+
+    <!--mysql-->
+    <select id="queryDatabaseTableListMap" parameterType="Map" resultType="Map">
+        SELECT
+            table_name AS tableName,
+            table_comment AS tableRemark
+        FROM
+            information_schema.TABLES
+        WHERE
+            TABLE_SCHEMA = #{databaseName}
+            <if test="tableName != null and tableName != ''">
+                <bind name="tableName" value="'%'+tableName+'%'"/>
+                and table_name like #{tableName}
+            </if>
+            <if test="tableRemark != null and tableRemark != ''">
+                <bind name="tableRemark" value="'%'+tableRemark+'%'"/>
+                and table_comment like #{tableRemark}
+            </if>
+    </select>
+
+    <!--sqlserver-->
+    <!--<select id="queryDatabaseTableListMap" parameterType="Map" resultType="Map">
+        select
+            ROW_NUMBER() OVER (ORDER BY a.name) AS seqNo,
+            a.name AS tableName,
+            ISNULL(g.value,'') AS tableRemark
+        from sys.tables a
+        left join sys.extended_properties g on a.object_id = g.major_id AND g.minor_id = 0
+        <where>
+            <if test="tableName != null and tableName != ''">
+                <bind name="tableName" value="'%'+tableName+'%'"/>
+                and a.name like #{tableName}
+            </if>
+            <if test="tableRemark != null and tableRemark != ''">
+                <bind name="tableRemark" value="'%'+tableRemark+'%'"/>
+                and g.[value] like #{tableRemark}
+            </if>
+        </where>
+    </select>-->
+
+
+</mapper>

@@ -1,0 +1,117 @@
+package ${projectPath}.controller.${moduleName};
+
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import ${projectPath}.entity.${moduleName}.${entity};
+import ${projectPath}.service.${moduleName}.${entity}Service;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import org.springframework.web.bind.annotation.RequestMapping;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import org.springframework.web.bind.annotation.RestController;
+import com.dee.frame.springbootframe.controller.BaseController;
+import ${projectPath}.processRule.CommonProcess;
+#foreach($method in ${methods})
+import ${projectPath}.vo.${moduleName}.${entity}.${method.voClass};
+import ${projectPath}.process.${moduleName}.${entity}.${method.processClass};
+#end
+#foreach($param in ${processRuleClass.keySet()})
+import ${processRuleClass.get($param)};
+#end
+
+import java.util.Map;
+
+/**
+ * @auther ${author}
+ * @create ${createTime}
+ * @describe
+ */
+@RestController
+@RequestMapping("${moduleName}")
+public class ${entity}Controller extends BaseController {
+
+    #set($voName=$entity.substring(0, 1).toLowerCase()+$entity.substring(1))
+    #set($serviceImplName=$voName+"Service")
+    @Autowired
+    private CommonProcess commonProcess;
+
+    @Autowired
+    private ${entity}Service ${voName}Service;
+
+    @ApiOperation("新增${entity}")
+    @PostMapping("/addBean")
+    public Map<String, Object> addBean(@RequestBody ${entity} $voName) {
+        try{
+            ${serviceImplName}.save(${voName});
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    @ApiOperation("编辑${entity}")
+    @PostMapping("/editBean")
+    public Map<String, Object> editBean(@RequestBody ${entity} $voName) {
+        try{
+            UpdateWrapper<${entity}> updateWrapper = new UpdateWrapper<${entity}>()
+                                .eq("id", ${voName}.getId());
+            ${serviceImplName}.update(${voName}, updateWrapper);
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    @ApiOperation("删除${entity}")
+    @PostMapping("/delBean")
+    public Map<String, Object> delBean(@RequestBody ${entity} $voName) {
+        try{
+            ${serviceImplName}.removeById(${voName}.getId());
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    #foreach($method in ${methods})
+    @PostMapping("/${method.apiMethod}")
+    public Map<String, Object> ${method.apiMethod}(@RequestBody ${method.voClass} ${method.voName}) {
+       try{
+           //将vo转换成加工后的对象
+           ${method.processClass} ${method.processName} = new ${method.processClass}();
+
+           #foreach($processField in ${method.processClassFields})
+           #if(${processField.processingRule})
+           ${method.processName}.${processField.setters}(${processField.processingRule});
+           #else
+           ${method.processName}.${processField.setters}(${method.voName}.get${processField.voField}());
+           #end
+           #end
+
+           #foreach($lambdaWrapper in ${method.lambdaWrappers})
+           LambdaUpdateWrapper<${method.entityClass}> lambdaUpdateWrapper = new LambdaUpdateWrapper<${method.entityClass}>()
+               #if(${lambdaWrapper.condition})
+               .apply(${lambdaWrapper.condition}, "")
+               #end
+               #foreach($lambdaWrapperDetail in ${lambdaWrapper.lambdaWrapperDetails})
+               .set(${method.entityClass}::${lambdaWrapperDetail.entityGetter}, ${method.processName}.${lambdaWrapperDetail.processGetter}())
+               #end
+               ;
+           ${voName}Service.update(lambdaUpdateWrapper);
+
+           #end
+           return toJson(SUCCESS);
+       }catch(Exception e){
+           e.printStackTrace();
+           return toJson(ERROR);
+       }
+    }
+    #end
+
+}

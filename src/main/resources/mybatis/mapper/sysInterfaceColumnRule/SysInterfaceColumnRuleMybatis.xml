@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generator.mapper.sysInterfaceColumnRule.SysInterfaceColumnRuleMapper">
+
+    <select id="querySysInterfaceColumnRuleList" parameterType="Map" resultType="com.generator.bean.sysInterfaceColumnRule.SysInterfaceColumnRule">
+        select
+            *
+        from sys_interface_column_rule
+        where sys_interface_info_id = #{sysInterfaceInfoId}
+    </select>
+
+    <delete id="deleteSysInterfaceColumnRule" parameterType="Map">
+        delete from sys_interface_column_rule
+        where sys_interface_info_id = #{sysInterfaceInfoId}
+    </delete>
+
+    <insert id="insertSysInterfaceColumnRuleList" parameterType="com.generator.bean.sysInterfaceColumnRule.SysInterfaceColumnRule">
+        insert into sys_interface_column_rule
+        (
+            sys_interface_info_id,
+            page_column_code,
+            page_column_name,
+            column_source,
+            page_column_type,
+            father_node_code,
+            max_length,
+            is_required,
+            validate_rule,
+            processing_rule,
+            column_alias_code,
+            create_time,
+            create_user,
+            last_update_time,
+            last_update_user
+        )
+        value
+        <foreach collection="list" item="item" index="index" separator=",">
+        (
+            #{item.sysInterfaceInfoId},
+            #{item.pageColumnCode},
+            #{item.pageColumnName},
+            #{item.columnSource},
+            #{item.pageColumnType},
+            #{item.fatherNodeCode},
+            #{item.maxLength},
+            #{item.isRequired},
+            #{item.validateRule},
+            #{item.processingRule},
+            #{item.columnAliasCode},
+            #{item.createTime},
+            #{item.createUser},
+            #{item.lastUpdateTime},
+            #{item.lastUpdateUser}
+        )
+        </foreach>
+    </insert>
+
+</mapper>

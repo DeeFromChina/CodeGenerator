@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generator.mapper.sysInterfaceTableInfo.SysInterfaceTableInfoMapper">
+
+    <delete id="deleteSysInterfaceTableInfo" parameterType="Map">
+        delete from sys_interface_table_info
+        where sys_interface_info_id = #{sysInterfaceInfoId}
+    </delete>
+
+    <insert id="insertSysInterfaceTableInfoList" parameterType="com.generator.bean.sysInterfaceTableInfo.SysInterfaceTableInfo">
+        insert into sys_interface_table_info
+        (
+            table_code,
+            sys_interface_info_id,
+            create_time,
+            create_user,
+            last_update_time,
+            last_update_user
+        )
+        value
+        <foreach collection="list" item="item" index="index" separator=",">
+        (
+            #{item.tableCode},
+            #{item.sysInterfaceInfoId},
+            #{item.createTime},
+            #{item.createUser},
+            #{item.lastUpdateTime},
+            #{item.lastUpdateUser}
+        )
+        </foreach>
+    </insert>
+
+</mapper>

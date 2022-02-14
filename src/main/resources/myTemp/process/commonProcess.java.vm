@@ -1,0 +1,16 @@
+package ${projectPath}.processRule;
+
+import org.springframework.beans.factory.annotation.Autowired;
+#foreach($bean in ${beans})
+import ${bean.classPath};
+#end
+
+public class CommonProcess {
+
+    #foreach($bean in ${beans})
+    @Autowired
+    public ${bean.className} ${bean.name};
+
+    #end
+
+}

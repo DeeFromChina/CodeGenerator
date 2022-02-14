@@ -1,0 +1,123 @@
+package ${controllerClass.controllerPath};
+
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+#foreach($param in ${controllerClass.entityClassMap.keySet()})
+import ${controllerClass.entityClassMap.get($param).classPath}.${controllerClass.entityClassMap.get($param).className};
+#end
+#foreach($param in ${controllerClass.serviceClassMap.keySet()})
+import ${controllerClass.serviceClassMap.get($param).servicePath}.${controllerClass.serviceClassMap.get($param).serviceName};
+#end
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import org.springframework.web.bind.annotation.RequestMapping;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import org.springframework.web.bind.annotation.RestController;
+import com.dee.frame.springbootframe.controller.BaseController;
+import ${projectPath}.processRule.CommonProcess;
+#foreach($param in ${controllerClass.methodMap.keySet()})
+import ${controllerClass.methodMap.get($param).voClass.classPath}.${controllerClass.methodMap.get($param).voClass.className};
+import ${controllerClass.methodMap.get($param).processClass.classPath}.${controllerClass.methodMap.get($param).processClass.className};
+#end
+#foreach($param in ${processRuleClassMap.keySet()})
+import ${processRuleClassMap.get($param)};
+#end
+
+import java.util.Map;
+
+/**
+ * @auther ${author}
+ * @create ${createTime}
+ * @describe
+ */
+@RestController
+@RequestMapping("${controllerClass.apiModular}")
+public class ${controllerClass.controllerName} extends BaseController {
+
+    @Autowired
+    private CommonProcess commonProcess;
+
+    #foreach($param in ${controllerClass.serviceClassMap.keySet()})
+    @Autowired
+    private ${controllerClass.serviceClassMap.get($param).serviceName} ${controllerClass.serviceClassMap.get($param).serviceImpl};
+
+    #end
+
+    @ApiOperation("新增${controllerClass.mainEntityClass.className}")
+    @PostMapping("/addBean")
+    public Map<String, Object> addBean(@RequestBody ${controllerClass.mainEntityClass.className} ${controllerClass.mainEntityClass.classImpl}) {
+        try{
+            ${controllerClass.mainEntityClass.classImpl}Service.save(${controllerClass.mainEntityClass.classImpl});
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    @ApiOperation("编辑${controllerClass.mainEntityClass.className}")
+    @PostMapping("/editBean")
+    public Map<String, Object> editBean(@RequestBody ${controllerClass.mainEntityClass.className} ${controllerClass.mainEntityClass.classImpl}) {
+        try{
+            UpdateWrapper<${controllerClass.mainEntityClass.className}> updateWrapper = new UpdateWrapper<${controllerClass.mainEntityClass.className}>()
+                                .eq("id", ${controllerClass.mainEntityClass.classImpl}.getId());
+            ${controllerClass.mainEntityClass.classImpl}Service.update(${controllerClass.mainEntityClass.classImpl}, updateWrapper);
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    @ApiOperation("删除${controllerClass.mainEntityClass.className}")
+    @PostMapping("/delBean")
+    public Map<String, Object> delBean(@RequestBody ${controllerClass.mainEntityClass.className} ${controllerClass.mainEntityClass.classImpl}) {
+        try{
+            ${controllerClass.mainEntityClass.classImpl}Service.removeById(${controllerClass.mainEntityClass.classImpl}.getId());
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    #foreach($param in ${controllerClass.methodMap.keySet()})
+    @PostMapping("/${controllerClass.methodMap.get($param).apiMethod}")
+    public Map<String, Object> ${controllerClass.methodMap.get($param).apiMethod}(@RequestBody ${controllerClass.methodMap.get($param).voClass.className} ${controllerClass.methodMap.get($param).voClass.classImpl}) {
+       try{
+           //将vo转换成加工后的对象
+           ${controllerClass.methodMap.get($param).processClass.className} ${controllerClass.methodMap.get($param).processClass.classImpl} = new ${controllerClass.methodMap.get($param).processClass.className}();
+
+           #foreach($processField in ${controllerClass.methodMap.get($param).processClass.processClassFields})
+           #if(${processField.processingRule})
+           ${controllerClass.methodMap.get($param).processClass.classImpl}.${processField.setters}(${processField.processingRule});
+           #else
+           ${controllerClass.methodMap.get($param).processClass.classImpl}.${processField.setters}(${controllerClass.methodMap.get($param).voClass.classImpl}.get${processField.voField}());
+           #end
+           #end
+
+           #foreach($lambdaWrapper in ${controllerClass.methodMap.get($param).lambdaWrappers})
+           #if()
+           LambdaUpdateWrapper<${controllerClass.mainEntityClass.className}> lambdaUpdateWrapper = new LambdaUpdateWrapper<${controllerClass.mainEntityClass.className}>()
+               #if(${lambdaWrapper.condition})
+               .apply(${lambdaWrapper.condition}, "")
+               #end
+               #foreach($lambdaWrapperDetail in ${lambdaWrapper.lambdaWrapperDetails})
+               .set(${controllerClass.mainEntityClass.className}::${lambdaWrapperDetail.entityGetter}, ${controllerClass.methodMap.get($param).processClass.classImpl}.${lambdaWrapperDetail.processGetter}())
+               #end
+               ;
+           ${controllerClass.mainEntityClass.classImpl}Service.update(lambdaUpdateWrapper);
+
+           #end
+           return toJson(SUCCESS);
+       }catch(Exception e){
+           e.printStackTrace();
+           return toJson(ERROR);
+       }
+    }
+    #end
+
+}

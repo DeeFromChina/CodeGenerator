@@ -1,0 +1,37 @@
+package ${projectPath}.process.${moduleName}.${entity};
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.IdType;
+import java.util.Date;
+import com.baomidou.mybatisplus.annotation.TableId;
+import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.*;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/**
+ * @auther ${author}
+ * @create ${createTime}
+ * @describe
+ */
+public class ${apiMethod}Process implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    #foreach($field in ${fields})
+    private ${field.propertyType} ${field.propertyName};
+
+    #end
+
+    #foreach($field in ${fields})
+    public ${field.propertyType} ${field.getters}() {
+        return this.${field.propertyName};
+    }
+
+    public void ${field.setters}(${field.propertyType} ${field.propertyName}) {
+        this.${field.propertyName} = ${field.propertyName};
+    }
+
+    #end
+}

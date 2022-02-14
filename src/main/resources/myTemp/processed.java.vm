@@ -1,0 +1,30 @@
+package ${processClass.classPath};
+
+import java.util.Date;
+import java.io.Serializable;
+
+/**
+ * @auther ${author}
+ * @create ${createTime}
+ * @describe
+ */
+public class ${processClass.className} implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    #foreach($field in ${processClass.processClassFields})
+    private ${field.propertyType} ${field.propertyName};
+
+    #end
+
+    #foreach($field in ${processClass.processClassFields})
+    public ${field.propertyType} ${field.getters}() {
+        return this.${field.propertyName};
+    }
+
+    public void ${field.setters}(${field.propertyType} ${field.propertyName}) {
+        this.${field.propertyName} = ${field.propertyName};
+    }
+
+    #end
+}

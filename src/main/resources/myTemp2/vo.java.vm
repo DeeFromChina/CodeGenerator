@@ -1,0 +1,59 @@
+package ${projectPath}.vo.${moduleName}.${entityClassName};
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.IdType;
+import java.util.Date;
+import com.baomidou.mybatisplus.annotation.TableId;
+import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.*;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
+
+/**
+ * @auther ${author}
+ * @create ${createTime}
+ * @describe
+ */
+#if(${tableName})
+@TableName("${tableName}")
+#end
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@ApiModel(value="${method.apiMethod}对象")
+public class ${method.voClass.className} implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    #foreach($field in ${method.voClass.voClassFields})
+    @ApiModelProperty(value = "${field.comment}")
+    #if(${field.isRequired})
+    @NotBlank(message = "${field.comment}不为空")
+    #end
+    #if(${field.maxLength})
+    @Length(max = ${field.maxLength}, message = "${field.comment}长度不能超过${field.maxLength}位字符")
+    #end
+    #if(${field.keyIdentityFlag})
+    @TableId(value = "${field.name}", type = IdType.AUTO)
+    #else
+    @TableId("${field.name}")
+    #end
+    private ${field.propertyType} ${field.propertyName};
+
+    #end
+
+    #foreach($field in ${method.voClass.voClassFields})
+    #if(${field.name})
+    #set($MethodSuffix=$field.name.substring(0, 1).toUpperCase()+$field.name.substring(1))
+    #end
+    public ${field.propertyType} ${field.getters}() {
+        return this.${field.propertyName};
+    }
+
+    public void ${field.setters}(${field.propertyType} ${field.propertyName}) {
+        this.${field.propertyName} = ${field.propertyName};
+    }
+
+    #end
+}

@@ -1,0 +1,17 @@
+package ${projectPath}.mapper.${moduleName};
+
+import ${projectPath}.entity.${moduleName}.${entity};
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+import org.springframework.stereotype.Repository;
+
+/**
+ * @auther ${author}
+ * @create ${createTime}
+ * @describe
+ */
+ @Mapper
+ @Repository
+public interface ${entity}Mapper extends BaseMapper<${entity}>{
+
+}

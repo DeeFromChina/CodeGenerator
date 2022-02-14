@@ -1,0 +1,120 @@
+package ${projectPath}.controller.${moduleName};
+
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+#foreach($param in ${entityClasse.keySet()})
+import ${projectPath}.entity.${entityClasse.get($param).modularCode}.${entityClasse.get($param).className};
+import ${projectPath}.service.${entityClasse.get($param).modularCode}.${entityClasse.get($param).className}Service;
+#end
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import org.springframework.web.bind.annotation.RequestMapping;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import org.springframework.web.bind.annotation.RestController;
+import com.dee.frame.springbootframe.controller.BaseController;
+import ${projectPath}.processRule.CommonProcess;
+#foreach($method in ${methods})
+import ${projectPath}.vo.${moduleName}.${mainEntityClass.className}.${method.voClass.className};
+import ${projectPath}.process.${moduleName}.${mainEntityClass.className}.${method.processClass.className};
+#end
+#foreach($param in ${processRuleClass.keySet()})
+import ${processRuleClass.get($param)};
+#end
+
+import java.util.Map;
+
+/**
+ * @auther ${author}
+ * @create ${createTime}
+ * @describe
+ */
+@RestController
+@RequestMapping("${apiModular}")
+public class ${mainEntityClass.className}Controller extends BaseController {
+
+    @Autowired
+    private CommonProcess commonProcess;
+
+    #foreach($param in ${entityClasse.keySet()})
+    @Autowired
+    private ${entityClasse.get($param).className}Service ${entityClasse.get($param).classImpl}Service;
+
+    #end
+
+    @ApiOperation("新增${mainEntityClass.className}")
+    @PostMapping("/addBean")
+    public Map<String, Object> addBean(@RequestBody ${mainEntityClass.className} ${mainEntityClass.classImpl}) {
+        try{
+            ${mainEntityClass.classImpl}Service.save(${mainEntityClass.classImpl});
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    @ApiOperation("编辑${mainEntityClass.className}")
+    @PostMapping("/editBean")
+    public Map<String, Object> editBean(@RequestBody ${mainEntityClass.className} ${mainEntityClass.classImpl}) {
+        try{
+            UpdateWrapper<${mainEntityClass.className}> updateWrapper = new UpdateWrapper<${mainEntityClass.className}>()
+                                .eq("id", ${mainEntityClass.classImpl}.getId());
+            ${mainEntityClass.classImpl}Service.update(${mainEntityClass.classImpl}, updateWrapper);
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    @ApiOperation("删除${mainEntityClass.className}")
+    @PostMapping("/delBean")
+    public Map<String, Object> delBean(@RequestBody ${mainEntityClass.className} ${mainEntityClass.classImpl}) {
+        try{
+            ${mainEntityClass.classImpl}Service.removeById(${mainEntityClass.classImpl}.getId());
+            return toJson(SUCCESS);
+        }catch(Exception e){
+            e.printStackTrace();
+            return toJson(ERROR);
+        }
+    }
+
+    #foreach($method in ${methods})
+    @PostMapping("/${method.apiMethod}")
+    public Map<String, Object> ${method.apiMethod}(@RequestBody ${method.voClass.className} ${method.voClass.classImpl}) {
+       try{
+           //将vo转换成加工后的对象
+           ${method.processClass.className} ${method.processClass.classImpl} = new ${method.processClass.className}();
+
+           #foreach($processField in ${method.processClass.processClassFields})
+           #if(${processField.processingRule})
+           ${method.processClass.classImpl}.${processField.setters}(${processField.processingRule});
+           #else
+           ${method.processClass.classImpl}.${processField.setters}(${method.voClass.classImpl}.get${processField.voField}());
+           #end
+           #end
+
+           #foreach($lambdaWrapper in ${method.lambdaWrappers})
+           LambdaUpdateWrapper<${mainEntityClass.className}> lambdaUpdateWrapper = new LambdaUpdateWrapper<${mainEntityClass.className}>()
+               #if(${lambdaWrapper.condition})
+               .apply(${lambdaWrapper.condition}, "")
+               #end
+               #foreach($lambdaWrapperDetail in ${lambdaWrapper.lambdaWrapperDetails})
+               .set(${mainEntityClass.className}::${lambdaWrapperDetail.entityGetter}, ${method.processClass.classImpl}.${lambdaWrapperDetail.processGetter}())
+               #end
+               ;
+           ${mainEntityClass.classImpl}Service.update(lambdaUpdateWrapper);
+
+           #end
+           return toJson(SUCCESS);
+       }catch(Exception e){
+           e.printStackTrace();
+           return toJson(ERROR);
+       }
+    }
+    #end
+
+}
