@@ -22,8 +22,8 @@ import ${projectPath}.processRule.CommonProcess;
 import ${controllerClass.methodMap.get($param).voClass.classPath}.${controllerClass.methodMap.get($param).voClass.className};
 import ${controllerClass.methodMap.get($param).processClass.classPath}.${controllerClass.methodMap.get($param).processClass.className};
 #end
-#foreach($param in ${processRuleClassMap.keySet()})
-import ${processRuleClassMap.get($param)};
+#foreach($param in ${controllerClass.processRuleClassMap.keySet()})
+import ${controllerClass.processRuleClassMap.get($param)};
 #end
 
 import java.util.Map;
@@ -84,40 +84,50 @@ public class ${controllerClass.controllerName} extends BaseController {
         }
     }
 
-    #foreach($param in ${controllerClass.methodMap.keySet()})
+#foreach($param in ${controllerClass.methodMap.keySet()})
     @PostMapping("/${controllerClass.methodMap.get($param).apiMethod}")
     public Map<String, Object> ${controllerClass.methodMap.get($param).apiMethod}(@RequestBody ${controllerClass.methodMap.get($param).voClass.className} ${controllerClass.methodMap.get($param).voClass.classImpl}) {
        try{
            //将vo转换成加工后的对象
            ${controllerClass.methodMap.get($param).processClass.className} ${controllerClass.methodMap.get($param).processClass.classImpl} = new ${controllerClass.methodMap.get($param).processClass.className}();
-
-           #foreach($processField in ${controllerClass.methodMap.get($param).processClass.processClassFields})
-           #if(${processField.processingRule})
+    #foreach($processField in ${controllerClass.methodMap.get($param).processClass.processClassFields})
+       #if(${processField.processingRule})
            ${controllerClass.methodMap.get($param).processClass.classImpl}.${processField.setters}(${processField.processingRule});
-           #else
-           ${controllerClass.methodMap.get($param).processClass.classImpl}.${processField.setters}(${controllerClass.methodMap.get($param).voClass.classImpl}.get${processField.voField}());
-           #end
-           #end
+       #else
+           ${controllerClass.methodMap.get($param).processClass.classImpl}.${processField.setters}(${controllerClass.methodMap.get($param).voClass.classImpl}.${processField.getters}());
+       #end
+    #end
 
-           #foreach($lambdaWrapper in ${controllerClass.methodMap.get($param).lambdaWrappers})
-           #if()
-           LambdaUpdateWrapper<${controllerClass.mainEntityClass.className}> lambdaUpdateWrapper = new LambdaUpdateWrapper<${controllerClass.mainEntityClass.className}>()
+    #foreach($lambdaWrapper in ${controllerClass.methodMap.get($param).lambdaWrappers})
+       #if($lambdaWrapper.type == "insert")
+           ${lambdaWrapper.entityClass.className} ${lambdaWrapper.entityClass.classImpl} = new ${lambdaWrapper.entityClass.className}();
+           #foreach($lambdaWrapperDetail in ${lambdaWrapper.lambdaWrapperDetails})
+           ${lambdaWrapper.entityClass.classImpl}.${lambdaWrapperDetail.entityClassField.setters}(${controllerClass.methodMap.get($param).processClass.classImpl}.${lambdaWrapperDetail.processClassField.getters}());
+           #end
+           ${lambdaWrapper.entityClass.classImpl}Service.save(${lambdaWrapper.entityClass.classImpl});
+
+       #end
+       #if($lambdaWrapper.type == "update")
+           LambdaUpdateWrapper<${lambdaWrapper.entityClass.className}> lambdaUpdateWrapper = new LambdaUpdateWrapper<${lambdaWrapper.entityClass.className}>()
                #if(${lambdaWrapper.condition})
                .apply(${lambdaWrapper.condition}, "")
                #end
                #foreach($lambdaWrapperDetail in ${lambdaWrapper.lambdaWrapperDetails})
-               .set(${controllerClass.mainEntityClass.className}::${lambdaWrapperDetail.entityGetter}, ${controllerClass.methodMap.get($param).processClass.classImpl}.${lambdaWrapperDetail.processGetter}())
+               .set(${lambdaWrapper.entityClass.className}::${lambdaWrapperDetail.entityClassField.getters}, ${controllerClass.methodMap.get($param).processClass.classImpl}.${lambdaWrapperDetail.processClassField.getters}())
                #end
                ;
-           ${controllerClass.mainEntityClass.classImpl}Service.update(lambdaUpdateWrapper);
+           ${lambdaWrapper.entityClass.classImpl}Service.update(lambdaUpdateWrapper);
 
-           #end
+       #end
+       #if($lambdaWrapper.type == "delete")
+       #end
+    #end
            return toJson(SUCCESS);
        }catch(Exception e){
            e.printStackTrace();
            return toJson(ERROR);
        }
     }
-    #end
+#end
 
 }

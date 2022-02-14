@@ -10,6 +10,7 @@ import com.generator.bean.sysInterfaceInfo.SysInterfaceInfo;
 import com.generator.bean.sysInterfaceTableColumnInfo.SysInterfaceTableColumnInfo;
 import com.generator.bean.sysInterfaceTableInfo.SysInterfaceTableInfo;
 import com.generator.bean.sysModularTable.SysModularTable;
+import com.generator.processRule.mapper.ProcessRuleMapper;
 import com.generator.service.codeGenerator.CodeGeneratorService;
 import com.generator.service.dataProcess.CodeDataProcessService;
 import com.generator.service.databaseTable.DatabaseTableColumnService;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.swing.text.html.parser.Entity;
 import java.io.File;
 import java.util.*;
 
@@ -153,11 +155,8 @@ public class CodeGeneratorController extends BaseController {
             //主表
             Map<String, EntityClass> entityClassMap = projectConfig.getEntityClassMap();
 
-            //初始化sqlLambdaWrapper
-            List<LambdaWrapper> lambdaWrappers = initLambdaWrappers(sysInterfaceInfo, entityClassMap.get(mainEntityClassName));
-
             //填充controller其他属性
-            setController(projectConfig, sysInterfaceInfo, entityClassMap.get(mainEntityClassName), lambdaWrappers);
+            setController(projectConfig, sysInterfaceInfo, entityClassMap.get(mainEntityClassName));
         }
     }
 
@@ -177,7 +176,7 @@ public class CodeGeneratorController extends BaseController {
 
         EntityClassField entityClassField = new EntityClassField();
         entityClassField.setName(tableColumnCode);
-        entityClassField.setPropertyType(FieldTypeMapper.transformType(tableColumnType));
+        entityClassField.setPropertyType(tableColumnType);
         entityClassField.setPropertyName(propertyName);
         entityClassField.setComment(tableColumnName);
         entityClassField.setIsRequired(isRequired);
@@ -370,11 +369,12 @@ public class CodeGeneratorController extends BaseController {
 
     /**
      * 初始化LambdaWrappers
-     * @param entityClass
+     * @param sysInterfaceInfo
+     * @param projectConfig
      * @return
      * @throws Exception
      */
-    private List<LambdaWrapper> initLambdaWrappers(SysInterfaceInfo sysInterfaceInfo, EntityClass entityClass) throws Exception {
+    private List<LambdaWrapper> initLambdaWrappers(SysInterfaceInfo sysInterfaceInfo, ProjectConfig projectConfig) throws Exception {
         List<LambdaWrapper> lambdaWrappers = new ArrayList<LambdaWrapper>();
 
         //querySqlBatch查询接口要执行的sql批次
@@ -387,11 +387,18 @@ public class CodeGeneratorController extends BaseController {
                     .eq("sys_interface_info_id", sysInterfaceInfo.getId())
                     .eq("sql_batch_id", sqlBatchMap.get("sqlBatchId"));
 
+            String tableCode = BaseUtil.returnString(sqlBatchMap.get("tableCode"));
+            String entityName = BaseUtil.toUpperCaseFirstOne(UnderlineToCamelUtils.underlineToCamel(tableCode, true));
+            Map<String, EntityClass> entityClassMap = projectConfig.getEntityClassMap();
+            EntityClass entityClass = entityClassMap.get(entityName);
+            Map<String, ProcessClass> processClassMap = projectConfig.getProcessClassMap();
+            ProcessClass processClass = processClassMap.get(BaseUtil.toUpperCaseFirstOne(sysInterfaceInfo.getApiMethod())+"Process");
+
             //每条sql的构成
             List<SysInterfaceTableColumnInfo> sysInterfaceTableColumnInfoList = sysInterfaceTableColumnInfoService.list(sysInterfaceTableColumnInfoQueryWrapper);
             for(SysInterfaceTableColumnInfo sysInterfaceTableColumnInfo : sysInterfaceTableColumnInfoList){
                 //填充LambdaWrapper字段
-                LambdaWrapperDetail lambdaWrapperDetail = initLambdaWrapperDetail(sysInterfaceTableColumnInfo);
+                LambdaWrapperDetail lambdaWrapperDetail = initLambdaWrapperDetail(sysInterfaceTableColumnInfo, entityClass.getEntityClassFields(), processClass.getProcessClassFields());
                 lambdaWrapperDetails.add(lambdaWrapperDetail);
             }
             LambdaWrapper lambdaWrapper = new LambdaWrapper();
@@ -410,16 +417,22 @@ public class CodeGeneratorController extends BaseController {
      * @return
      * @throws Exception
      */
-    private LambdaWrapperDetail initLambdaWrapperDetail(SysInterfaceTableColumnInfo sysInterfaceTableColumnInfo) throws Exception {
+    private LambdaWrapperDetail initLambdaWrapperDetail(SysInterfaceTableColumnInfo sysInterfaceTableColumnInfo, List<EntityClassField> entityClassFields, List<ProcessClassField> processClassFields) throws Exception {
         String tableColumnCode = sysInterfaceTableColumnInfo.getTableColumnCode();
         String propertyName = UnderlineToCamelUtils.underlineToCamel(tableColumnCode, true);
         String paramCode = sysInterfaceTableColumnInfo.getParamCode();
 
         LambdaWrapperDetail lambdaWrapperDetail = new LambdaWrapperDetail();
-        lambdaWrapperDetail.setProcessGetter("get"+BaseUtil.toUpperCaseFirstOne(paramCode));
-        lambdaWrapperDetail.setProcessSetter("set"+BaseUtil.toUpperCaseFirstOne(paramCode));
-        lambdaWrapperDetail.setEntityGetter("get"+BaseUtil.toUpperCaseFirstOne(propertyName));
-        lambdaWrapperDetail.setEntitySetter("set"+BaseUtil.toUpperCaseFirstOne(propertyName));
+        for(EntityClassField entityClassField : entityClassFields){
+            if(entityClassField.getPropertyName().equals(propertyName)){
+                lambdaWrapperDetail.setEntityClassField(entityClassField);
+            }
+        }
+        for(ProcessClassField processClassField : processClassFields){
+            if(processClassField.getPropertyName().equals(paramCode)){
+                lambdaWrapperDetail.setProcessClassField(processClassField);
+            }
+        }
         return lambdaWrapperDetail;
     }
 
@@ -428,10 +441,9 @@ public class CodeGeneratorController extends BaseController {
      * @param projectConfig
      * @param sysInterfaceInfo
      * @param entityClass
-     * @param lambdaWrappers
      * @throws Exception
      */
-    private void setController(ProjectConfig projectConfig, SysInterfaceInfo sysInterfaceInfo, EntityClass entityClass, List<LambdaWrapper> lambdaWrappers) throws Exception {
+    private void setController(ProjectConfig projectConfig, SysInterfaceInfo sysInterfaceInfo, EntityClass entityClass) throws Exception {
         String tableCode = UnderlineToCamelUtils.camelToUnderline(sysInterfaceInfo.getApiModular()).toLowerCase();
         Map<String, ControllerClass> controllerClassMap = projectConfig.getControllerClassMap();
         String controllerName = BaseUtil.toUpperCaseFirstOne(sysInterfaceInfo.getApiModular()) + "Controller";
@@ -459,9 +471,14 @@ public class CodeGeneratorController extends BaseController {
             controllerMethod = new ControllerMethod();
         }
         controllerMethod.setApiMethod(sysInterfaceInfo.getApiMethod());
-        controllerMethod.setLambdaWrappers(lambdaWrappers);
+
         //设置Vo类和process类
         setVoAndProcess(projectConfig, sysInterfaceInfo, controllerClass, controllerMethod);
+
+        //初始化sqlLambdaWrapper
+        List<LambdaWrapper> lambdaWrappers = initLambdaWrappers(sysInterfaceInfo, projectConfig);
+        controllerMethod.setLambdaWrappers(lambdaWrappers);
+
         controllerMethodMap.put(sysInterfaceInfo.getApiMethod(), controllerMethod);
         controllerClass.setMethodMap(controllerMethodMap);
 
@@ -512,11 +529,9 @@ public class CodeGeneratorController extends BaseController {
             if(voClassField != null){
                 voClassFields.add(voClassField);
             }
-
         }
         processClass.setProcessClassFields(processClassFields);
         controllerMethod.setProcessClass(processClass);
-
 
         voClass.setVoClassFields(voClassFields);
         controllerMethod.setVoClass(voClass);
@@ -542,8 +557,6 @@ public class CodeGeneratorController extends BaseController {
     private ProcessClassField initProcessClassField(ControllerClass controllerClass, SysInterfaceColumnRule sysInterfaceColumnRule) throws Exception {
         //加工后字段
         ProcessClassField processClassField = new ProcessClassField();
-        //setProcessRuleClass
-        codeDataProcessService.processData(processClassField, controllerClass.getProcessRuleClassMap());
         processClassField.setVoField(sysInterfaceColumnRule.getPageColumnCode());
         processClassField.setProcessingRule(sysInterfaceColumnRule.getProcessingRule());
         processClassField.setComment(sysInterfaceColumnRule.getPageColumnName());
@@ -551,6 +564,8 @@ public class CodeGeneratorController extends BaseController {
         processClassField.setPropertyType(FieldTypeMapper.transformType(sysInterfaceColumnRule.getPageColumnType()));
         processClassField.setGetters("get"+BaseUtil.toUpperCaseFirstOne(sysInterfaceColumnRule.getColumnAliasCode()));
         processClassField.setSetters("set"+BaseUtil.toUpperCaseFirstOne(sysInterfaceColumnRule.getColumnAliasCode()));
+        //setProcessRuleClass
+        codeDataProcessService.processData(processClassField, controllerClass.getProcessRuleClassMap());
         return processClassField;
     }
 

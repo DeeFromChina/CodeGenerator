@@ -214,8 +214,8 @@ public class CodeGeneratorServiceImpl implements CodeGeneratorService {
                     String setValue1 = "get"+BaseUtil.toUpperCaseFirstOne(fieldName);
                     String setValue2 = "get"+BaseUtil.toUpperCaseFirstOne(sysInterfaceTableColumnInfo.getParamCode());
                     LambdaWrapperDetail lambdaWrapperDetail = new LambdaWrapperDetail();
-                    lambdaWrapperDetail.setEntityGetter(setValue1);
-                    lambdaWrapperDetail.setProcessGetter(setValue2);
+//                    lambdaWrapperDetail.setEntityGetter(setValue1);
+//                    lambdaWrapperDetail.setProcessGetter(setValue2);
                     lambdaWrapperDetails.add(lambdaWrapperDetail);
                 }
             }

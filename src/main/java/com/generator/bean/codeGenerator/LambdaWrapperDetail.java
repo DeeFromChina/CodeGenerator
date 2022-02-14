@@ -2,43 +2,23 @@ package com.generator.bean.codeGenerator;
 
 public class LambdaWrapperDetail {
 
-    private String entitySetter;
+    private EntityClassField entityClassField;
 
-    private String entityGetter;
+    private ProcessClassField processClassField;
 
-    private String processSetter;
-
-    private String processGetter;
-
-    public String getEntitySetter() {
-        return entitySetter;
+    public EntityClassField getEntityClassField() {
+        return entityClassField;
     }
 
-    public void setEntitySetter(String entitySetter) {
-        this.entitySetter = entitySetter;
+    public void setEntityClassField(EntityClassField entityClassField) {
+        this.entityClassField = entityClassField;
     }
 
-    public String getEntityGetter() {
-        return entityGetter;
+    public ProcessClassField getProcessClassField() {
+        return processClassField;
     }
 
-    public void setEntityGetter(String entityGetter) {
-        this.entityGetter = entityGetter;
-    }
-
-    public String getProcessSetter() {
-        return processSetter;
-    }
-
-    public void setProcessSetter(String processSetter) {
-        this.processSetter = processSetter;
-    }
-
-    public String getProcessGetter() {
-        return processGetter;
-    }
-
-    public void setProcessGetter(String processGetter) {
-        this.processGetter = processGetter;
+    public void setProcessClassField(ProcessClassField processClassField) {
+        this.processClassField = processClassField;
     }
 }
