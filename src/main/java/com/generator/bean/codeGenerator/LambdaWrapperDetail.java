@@ -6,6 +6,8 @@ public class LambdaWrapperDetail {
 
     private ProcessClassField processClassField;
 
+    private String lambdaWrapperRule;
+
     public EntityClassField getEntityClassField() {
         return entityClassField;
     }
@@ -20,5 +22,13 @@ public class LambdaWrapperDetail {
 
     public void setProcessClassField(ProcessClassField processClassField) {
         this.processClassField = processClassField;
+    }
+
+    public String getLambdaWrapperRule() {
+        return lambdaWrapperRule;
+    }
+
+    public void setLambdaWrapperRule(String lambdaWrapperRule) {
+        this.lambdaWrapperRule = lambdaWrapperRule;
     }
 }

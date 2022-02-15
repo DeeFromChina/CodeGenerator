@@ -2,6 +2,7 @@ package com.generator.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.dee.frame.springbootframe.controller.BaseController;
+import com.dee.frame.springbootframe.util.RegularUtil;
 import com.dee.frame.springbootframe.util.UnderlineToCamelUtils;
 import com.dee.frame.springbootframe.util.common.BaseUtil;
 import com.generator.bean.codeGenerator.*;
@@ -10,7 +11,6 @@ import com.generator.bean.sysInterfaceInfo.SysInterfaceInfo;
 import com.generator.bean.sysInterfaceTableColumnInfo.SysInterfaceTableColumnInfo;
 import com.generator.bean.sysInterfaceTableInfo.SysInterfaceTableInfo;
 import com.generator.bean.sysModularTable.SysModularTable;
-import com.generator.processRule.mapper.ProcessRuleMapper;
 import com.generator.service.codeGenerator.CodeGeneratorService;
 import com.generator.service.dataProcess.CodeDataProcessService;
 import com.generator.service.databaseTable.DatabaseTableColumnService;
@@ -80,13 +80,13 @@ public class CodeGeneratorController extends BaseController {
             CodeGenerator codeGenerator = new CodeGenerator();
             codeGenerator
 //                    .createCommonProcess(projectConfig)
-//                    .createVo(projectConfig)
-//                    .createProcess(projectConfig)
+                    .createVo(projectConfig)
+                    .createProcess(projectConfig)
 //                    .createEntitys(projectConfig)
 //                    .createService(projectConfig)
 //                    .createServiceImpl(projectConfig)
 //                    .createMapper(projectConfig)
-                    .createController(projectConfig)
+//                    .createController(projectConfig)
             ;
 
             return toJson(SUCCESS);
@@ -150,12 +150,13 @@ public class CodeGeneratorController extends BaseController {
                 initEntityRelated(projectConfig, sysInterfaceInfo, tableCode);
             }
             //主Entity
-            String mainEntityClassName = BaseUtil.toUpperCaseFirstOne(sysInterfaceInfo.getApiModular());
+//            String mainEntityClassName = BaseUtil.toUpperCaseFirstOne(sysInterfaceInfo.getApiModular());
             //主表
-            Map<String, EntityClass> entityClassMap = projectConfig.getEntityClassMap();
+//            Map<String, EntityClass> entityClassMap = projectConfig.getEntityClassMap();
 
             //填充controller其他属性
-            setController(projectConfig, sysInterfaceInfo, entityClassMap.get(mainEntityClassName));
+//            setController(projectConfig, sysInterfaceInfo, entityClassMap.get(mainEntityClassName));
+            setController(projectConfig, sysInterfaceInfo, null);
         }
     }
 
@@ -225,7 +226,7 @@ public class CodeGeneratorController extends BaseController {
         MybatisClass mybatisClass = new MybatisClass();
 
         //生成controller
-        initController(projectConfig, entityClass, serviceClass);
+        initController(projectConfig, entityClass, serviceClass, tableCode);
 
         //初始化主controller
         initMainController(projectConfig, sysInterfaceInfo, entityClass, serviceClass);
@@ -312,7 +313,7 @@ public class CodeGeneratorController extends BaseController {
      * @param serviceClass
      * @throws Exception
      */
-    private void initController(ProjectConfig projectConfig, EntityClass entityClass, ServiceClass serviceClass) throws Exception {
+    private void initController(ProjectConfig projectConfig, EntityClass entityClass, ServiceClass serviceClass, String tableCode) throws Exception {
         Map<String, ControllerClass> controllerClassMap = projectConfig.getControllerClassMap();
         String controllerName = entityClass.getClassName() + "Controller";
         ControllerClass controllerClass = controllerClassMap.get(controllerName);
@@ -320,6 +321,16 @@ public class CodeGeneratorController extends BaseController {
             controllerClass = new ControllerClass();
         }
         controllerClass.setControllerName(controllerName);
+        controllerClass.setMainEntityClass(entityClass);
+
+        String controllerPath = projectConfig.getProjectPath() + ".controller." + sysModularTableMap.get(tableCode).getModularCode();
+        String controllerFilePath = projectConfig.getFilePath() + File.separator + "controller" + File.separator + sysModularTableMap.get(tableCode).getModularCode();
+
+        controllerClass.setControllerName(controllerName);
+        controllerClass.setControllerPath(controllerPath);
+        controllerClass.setControllerFilePath(controllerFilePath);
+        controllerClass.setApiModular("/"+entityClass.getClassImpl());
+
         Map<String, EntityClass> controllerClassEntityClassMap = controllerClass.getEntityClassMap();
         if(controllerClassEntityClassMap == null){
             controllerClassEntityClassMap = new HashMap<>();
@@ -337,7 +348,7 @@ public class CodeGeneratorController extends BaseController {
     }
 
     /**
-     * 初始化主controller
+     * 初始化主controller,将其他对象注入到主controller中
      * @param projectConfig
      * @param sysInterfaceInfo
      * @param entityClass
@@ -350,8 +361,17 @@ public class CodeGeneratorController extends BaseController {
         ControllerClass controllerClass = controllerClassMap.get(controllerName);
         if(controllerClass == null){
             controllerClass = new ControllerClass();
+            controllerClass.setControllerName(controllerName);
+            controllerClass.setMainEntityClass(entityClass);
+
+            String controllerPath = projectConfig.getProjectPath() + ".controller." + sysInterfaceInfo.getFunModular();
+            String controllerFilePath = projectConfig.getFilePath() + File.separator + "controller" + File.separator + sysInterfaceInfo.getFunModular();
+
+            controllerClass.setControllerName(controllerName);
+            controllerClass.setControllerPath(controllerPath);
+            controllerClass.setControllerFilePath(controllerFilePath);
+            controllerClass.setApiModular("/"+sysInterfaceInfo.getApiModular());
         }
-        controllerClass.setControllerName(controllerName);
         Map<String, EntityClass> controllerClassEntityClassMap = controllerClass.getEntityClassMap();
         if(controllerClassEntityClassMap == null){
             controllerClassEntityClassMap = new HashMap<>();
@@ -397,7 +417,7 @@ public class CodeGeneratorController extends BaseController {
             List<SysInterfaceTableColumnInfo> sysInterfaceTableColumnInfoList = sysInterfaceTableColumnInfoService.list(sysInterfaceTableColumnInfoQueryWrapper);
             for(SysInterfaceTableColumnInfo sysInterfaceTableColumnInfo : sysInterfaceTableColumnInfoList){
                 //填充LambdaWrapper字段
-                LambdaWrapperDetail lambdaWrapperDetail = initLambdaWrapperDetail(sysInterfaceTableColumnInfo, entityClass.getEntityClassFields(), processClass.getProcessClassFields());
+                LambdaWrapperDetail lambdaWrapperDetail = initLambdaWrapperDetail(entityClassMap, sysInterfaceTableColumnInfo, entityClass, processClass);
                 lambdaWrapperDetails.add(lambdaWrapperDetail);
             }
             LambdaWrapper lambdaWrapper = new LambdaWrapper();
@@ -413,10 +433,14 @@ public class CodeGeneratorController extends BaseController {
     /**
      * 填充LambdaWrapper字段
      * @param sysInterfaceTableColumnInfo
+     * @param entityClass
+     * @param processClass
      * @return
      * @throws Exception
      */
-    private LambdaWrapperDetail initLambdaWrapperDetail(SysInterfaceTableColumnInfo sysInterfaceTableColumnInfo, List<EntityClassField> entityClassFields, List<ProcessClassField> processClassFields) throws Exception {
+    private LambdaWrapperDetail initLambdaWrapperDetail(Map<String, EntityClass> entityClassMap, SysInterfaceTableColumnInfo sysInterfaceTableColumnInfo, EntityClass entityClass, ProcessClass processClass) throws Exception {
+        List<EntityClassField> entityClassFields = entityClass.getEntityClassFields();
+        List<ProcessClassField> processClassFields = processClass.getProcessClassFields();
         String tableColumnCode = sysInterfaceTableColumnInfo.getTableColumnCode();
         String propertyName = UnderlineToCamelUtils.underlineToCamel(tableColumnCode, true);
         String paramCode = sysInterfaceTableColumnInfo.getParamCode();
@@ -432,7 +456,28 @@ public class CodeGeneratorController extends BaseController {
                 lambdaWrapperDetail.setProcessClassField(processClassField);
             }
         }
+        String lambdaWrapperRule = dealLambdaWrapperRule(entityClassMap, paramCode);
+        lambdaWrapperDetail.setLambdaWrapperRule(lambdaWrapperRule);
         return lambdaWrapperDetail;
+    }
+
+    public String dealLambdaWrapperRule(Map<String, EntityClass> entityClassMap, String paramCode) {
+        if(paramCode.indexOf("entity") == 0){
+            List<String> entityNames = RegularUtil.outputMsgs(paramCode, "entity", RegularUtil.SQUARE_BRACKETS);
+            String entityName = entityNames.get(0);
+            String field = paramCode.replace("entity["+entityName+"].", "");
+            EntityClass entityClass = entityClassMap.get(entityName);
+            List<EntityClassField> entityClassFields = entityClass.getEntityClassFields();
+            String lambdaWrapperRule = entityClass.getClassImpl() + ".";
+            for(EntityClassField entityClassField : entityClassFields){
+                if(entityClassField.getPropertyName().equals(field)){
+                    lambdaWrapperRule += entityClassField.getGetters() + "()";
+                    break;
+                }
+            }
+            return lambdaWrapperRule;
+        }
+        return null;
     }
 
     /**
@@ -448,18 +493,11 @@ public class CodeGeneratorController extends BaseController {
         String controllerName = BaseUtil.toUpperCaseFirstOne(sysInterfaceInfo.getApiModular()) + "Controller";
         ControllerClass controllerClass = controllerClassMap.get(controllerName);
         //生成controller
-        String controllerPath = projectConfig.getProjectPath() + ".controller." + sysModularTableMap.get(tableCode).getModularCode();
-        String controllerFilePath = projectConfig.getFilePath() + File.separator + "controller" + File.separator + sysModularTableMap.get(tableCode).getModularCode();
-
-        controllerClass.setControllerName(controllerName);
-        controllerClass.setControllerPath(controllerPath);
-        controllerClass.setControllerFilePath(controllerFilePath);
-        controllerClass.setApiModular(sysInterfaceInfo.getApiModular());
 
 //        controllerClass.setServiceClassMap(new HashMap<>());
         controllerClass.setProcessRuleClassMap(new HashMap<>());
 //        controllerClass.setEntityClassMap(new HashMap<>());
-        controllerClass.setMainEntityClass(entityClass);
+//        controllerClass.setMainEntityClass(entityClass);
 
         Map<String, ControllerMethod> controllerMethodMap = controllerClass.getMethodMap();
         if(controllerMethodMap == null){

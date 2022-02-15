@@ -40,12 +40,12 @@ public class ${controllerClass.controllerName} extends BaseController {
     @Autowired
     private CommonProcess commonProcess;
 
-    #foreach($param in ${controllerClass.serviceClassMap.keySet()})
+#foreach($param in ${controllerClass.serviceClassMap.keySet()})
     @Autowired
     private ${controllerClass.serviceClassMap.get($param).serviceName} ${controllerClass.serviceClassMap.get($param).serviceImpl};
 
-    #end
-
+#end
+#if(${controllerClass.mainEntityClass})
     @ApiOperation("新增${controllerClass.mainEntityClass.className}")
     @PostMapping("/addBean")
     public Map<String, Object> addBean(@RequestBody ${controllerClass.mainEntityClass.className} ${controllerClass.mainEntityClass.classImpl}) {
@@ -83,7 +83,7 @@ public class ${controllerClass.controllerName} extends BaseController {
             return toJson(ERROR);
         }
     }
-
+#end
 #foreach($param in ${controllerClass.methodMap.keySet()})
     @PostMapping("/${controllerClass.methodMap.get($param).apiMethod}")
     public Map<String, Object> ${controllerClass.methodMap.get($param).apiMethod}(@RequestBody ${controllerClass.methodMap.get($param).voClass.className} ${controllerClass.methodMap.get($param).voClass.classImpl}) {
@@ -102,7 +102,11 @@ public class ${controllerClass.controllerName} extends BaseController {
        #if($lambdaWrapper.type == "insert")
            ${lambdaWrapper.entityClass.className} ${lambdaWrapper.entityClass.classImpl} = new ${lambdaWrapper.entityClass.className}();
            #foreach($lambdaWrapperDetail in ${lambdaWrapper.lambdaWrapperDetails})
+           #if($lambdaWrapperDetail.lambdaWrapperRule)
+           ${lambdaWrapper.entityClass.classImpl}.${lambdaWrapperDetail.entityClassField.setters}(${lambdaWrapperDetail.lambdaWrapperRule});
+           #else
            ${lambdaWrapper.entityClass.classImpl}.${lambdaWrapperDetail.entityClassField.setters}(${controllerClass.methodMap.get($param).processClass.classImpl}.${lambdaWrapperDetail.processClassField.getters}());
+           #end
            #end
            ${lambdaWrapper.entityClass.classImpl}Service.save(${lambdaWrapper.entityClass.classImpl});
 
