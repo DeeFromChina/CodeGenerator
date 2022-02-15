@@ -80,13 +80,13 @@ public class CodeGeneratorController extends BaseController {
             CodeGenerator codeGenerator = new CodeGenerator();
             codeGenerator
 //                    .createCommonProcess(projectConfig)
-                    .createVo(projectConfig)
-                    .createProcess(projectConfig)
+//                    .createVo(projectConfig)
+//                    .createProcess(projectConfig)
 //                    .createEntitys(projectConfig)
 //                    .createService(projectConfig)
 //                    .createServiceImpl(projectConfig)
 //                    .createMapper(projectConfig)
-//                    .createController(projectConfig)
+                    .createController(projectConfig)
             ;
 
             return toJson(SUCCESS);
@@ -149,14 +149,9 @@ public class CodeGeneratorController extends BaseController {
                 //初始化entity相关
                 initEntityRelated(projectConfig, sysInterfaceInfo, tableCode);
             }
-            //主Entity
-//            String mainEntityClassName = BaseUtil.toUpperCaseFirstOne(sysInterfaceInfo.getApiModular());
-            //主表
-//            Map<String, EntityClass> entityClassMap = projectConfig.getEntityClassMap();
 
             //填充controller其他属性
-//            setController(projectConfig, sysInterfaceInfo, entityClassMap.get(mainEntityClassName));
-            setController(projectConfig, sysInterfaceInfo, null);
+            setController(projectConfig, sysInterfaceInfo);
         }
     }
 
@@ -282,7 +277,7 @@ public class CodeGeneratorController extends BaseController {
         serviceClass.setEntityClass(entityClass);
         serviceClass.setServicePath(projectConfig.getProjectPath() + ".service." + sysModularTableMap.get(tableCode).getModularCode());
         serviceClass.setServiceFilePath(projectConfig.getFilePath() + File.separator + "service" + File.separator + sysModularTableMap.get(tableCode).getModularCode());
-//                    serviceClass.setServiceMethods();
+//      serviceClass.setServiceMethods();
         return serviceClass;
     }
 
@@ -302,7 +297,7 @@ public class CodeGeneratorController extends BaseController {
         serviceImplClass.setServiceClass(serviceClass);
         serviceImplClass.setServiceImplPath(projectConfig.getProjectPath() + ".service." + sysModularTableMap.get(tableCode).getModularCode() + ".impl");
         serviceImplClass.setServiceImplFilePath(projectConfig.getFilePath() + File.separator + "service" + File.separator + sysModularTableMap.get(tableCode).getModularCode() + File.separator + "impl");
-//                    serviceImplClass.setServiceImplMethods();
+//      serviceImplClass.setServiceImplMethods();
         return serviceImplClass;
     }
 
@@ -362,7 +357,7 @@ public class CodeGeneratorController extends BaseController {
         if(controllerClass == null){
             controllerClass = new ControllerClass();
             controllerClass.setControllerName(controllerName);
-            controllerClass.setMainEntityClass(entityClass);
+//          controllerClass.setMainEntityClass(entityClass);
 
             String controllerPath = projectConfig.getProjectPath() + ".controller." + sysInterfaceInfo.getFunModular();
             String controllerFilePath = projectConfig.getFilePath() + File.separator + "controller" + File.separator + sysInterfaceInfo.getFunModular();
@@ -377,12 +372,14 @@ public class CodeGeneratorController extends BaseController {
             controllerClassEntityClassMap = new HashMap<>();
         }
         controllerClassEntityClassMap.put(entityClass.getClassName(), entityClass);
+        controllerClass.setEntityClassMap(controllerClassEntityClassMap);
 
         Map<String, ServiceClass> controllerClassServiceClassMap = controllerClass.getServiceClassMap();
         if(controllerClassServiceClassMap == null){
             controllerClassServiceClassMap = new HashMap<>();
         }
         controllerClassServiceClassMap.put(serviceClass.getServiceName(), serviceClass);
+        controllerClass.setServiceClassMap(controllerClassServiceClassMap);
         controllerClassMap.put(controllerClass.getControllerName(), controllerClass);
     }
 
@@ -484,20 +481,15 @@ public class CodeGeneratorController extends BaseController {
      * 填充controller其他属性
      * @param projectConfig
      * @param sysInterfaceInfo
-     * @param entityClass
      * @throws Exception
      */
-    private void setController(ProjectConfig projectConfig, SysInterfaceInfo sysInterfaceInfo, EntityClass entityClass) throws Exception {
+    private void setController(ProjectConfig projectConfig, SysInterfaceInfo sysInterfaceInfo) throws Exception {
         String tableCode = UnderlineToCamelUtils.camelToUnderline(sysInterfaceInfo.getApiModular()).toLowerCase();
         Map<String, ControllerClass> controllerClassMap = projectConfig.getControllerClassMap();
         String controllerName = BaseUtil.toUpperCaseFirstOne(sysInterfaceInfo.getApiModular()) + "Controller";
         ControllerClass controllerClass = controllerClassMap.get(controllerName);
         //生成controller
-
-//        controllerClass.setServiceClassMap(new HashMap<>());
         controllerClass.setProcessRuleClassMap(new HashMap<>());
-//        controllerClass.setEntityClassMap(new HashMap<>());
-//        controllerClass.setMainEntityClass(entityClass);
 
         Map<String, ControllerMethod> controllerMethodMap = controllerClass.getMethodMap();
         if(controllerMethodMap == null){
